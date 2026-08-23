@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   backup:
-    # Only process Exercism sync PRs.
     if: startsWith(github.event.pull_request.head.ref, 'exercism-sync/')
     runs-on: ubuntu-latest
 
@@ -21,20 +20,23 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: Configure Git identity
+        run: |
+          git config user.name "KowalczykPatryk"
+          git config user.email "patrykkowalczyk565@gmail.com"
+
       - name: Fetch PR
-        run: git fetch origin ${{ github.event.pull_request.head.sha }}
+        run: |
+          git fetch origin ${{ github.event.pull_request.head.sha }}
 
       - name: Merge PR changes
         run: |
           git merge --no-commit --no-ff ${{ github.event.pull_request.head.sha }}
 
-      - name: Create commit as me
+      - name: Create commit
         run: |
-          git config user.name "KowalczykPatryk"
-          git config user.email "patrykkowalczyk565@gmail.com"
-
-          git commit \
-            -m "${{ github.event.pull_request.title }}"
+          git commit -m "${{ github.event.pull_request.title }}"
 
       - name: Push to main
-        run: git push origin main
+        run: |
+          git push origin main
