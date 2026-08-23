@@ -1,4 +1,4 @@
-name: Auto merge Exercism PRs
+name: Backup Exercism solution
 
 on:
   pull_request:
@@ -6,15 +6,35 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
+  pull-requests: read
 
 jobs:
-  auto-merge:
+  backup:
+    # Only process Exercism sync PRs.
+    if: startsWith(github.event.pull_request.head.ref, 'exercism-sync/')
     runs-on: ubuntu-latest
+
     steps:
-      - name: Merge PR
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fetch PR
+        run: git fetch origin ${{ github.event.pull_request.head.sha }}
+
+      - name: Merge PR changes
         run: |
-          gh pr merge "$PR_NUMBER" --merge --repo "$GITHUB_REPOSITORY"
+          git merge --no-commit --no-ff ${{ github.event.pull_request.head.sha }}
+
+      - name: Create commit as me
+        run: |
+          git config user.name "KowalczykPatryk"
+          git config user.email "patrykkowalczyk565@gmail.com"
+
+          git commit \
+            -m "${{ github.event.pull_request.title }}"
+
+      - name: Push to main
+        run: git push origin main
